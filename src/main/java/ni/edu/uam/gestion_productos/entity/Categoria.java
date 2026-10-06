@@ -1,6 +1,9 @@
 package ni.edu.uam.gestion_productos.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "categoria")
@@ -13,6 +16,10 @@ public class Categoria {
     private String nombre;
 
     private boolean activa;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<Producto> productos = new ArrayList<>();
 
     public Categoria() {
     }
@@ -45,5 +52,13 @@ public class Categoria {
 
     public void setActiva(boolean activa) {
         this.activa = activa;
+    }
+
+    public List<Producto> getProductos() {
+        return productos;
+    }
+
+    public void setProductos(List<Producto> productos) {
+        this.productos = productos;
     }
 }

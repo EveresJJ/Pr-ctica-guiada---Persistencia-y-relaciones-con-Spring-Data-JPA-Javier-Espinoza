@@ -1,4 +1,4 @@
-# Práctica Guiada: Persistencia y Relaciones con Spring Data JPA
+# Práctica Guiada # 2 / Laboratorio #1: Persistencia y Relaciones con Spring Data JPA
 
 **Universidad Americana (UAM)**  
 **Facultad de Ingeniería y Arquitectura**  
@@ -9,66 +9,68 @@
 ---
 
 ## 📌 Descripción del Proyecto
-API RESTful construida con **Spring Boot**, **Spring Data JPA**, **PostgreSQL** y control de migraciones con **Flyway**. El sistema permite administrar un catálogo de productos comerciales clasificados por categorías y vinculados a sus respectivos proveedores, implementando relaciones `@ManyToOne` y garantizando la integridad referencial.
+Evolución de la API RESTful empresarial construida con **Spring Boot**, **Spring Data JPA**, **PostgreSQL** y control de migraciones con **Flyway**. Incorpora una arquitectura en capas desacoplada (**Controller → Service → Repository → PostgreSQL**), uso de **DTOs con Bean Validation**, un **CRUD completo de Productos**, consultas por relación y una relación **Muchos a Muchos (Many-to-Many)** entre `Producto` y `Etiqueta`.
 
 ---
 
-## 🚀 Tecnologías Utilizadas
+## 🚀 Arquitectura y Tecnologías
 - **Java 21 / 25**
 - **Spring Boot 3.4.4**
-  - Spring Web (RESTful Controllers & JSON)
-  - Spring Data JPA (Hibernate ORM)
-  - Spring Boot Starter Validation
+  - **Controller:** Endpoints REST con `ResponseEntity` y manejo de códigos HTTP semánticos.
+  - **Service:** Capa de lógica de negocio transaccional (`@Transactional`) y validaciones de entidades.
+  - **DTO:** `ProductoRequestDTO` para transferir datos de forma segura desacoplando el modelo interno.
+  - **Repository:** `JpaRepository` con consultas derivadas (`findByCategoriaId`, `findByEtiquetasId`).
+  - **Entity:** `Categoria`, `Producto`, `Proveedor`, `Etiqueta` con mapeos `@ManyToOne`, `@OneToMany` y `@ManyToMany`.
 - **PostgreSQL 18** (Driver JDBC PostgreSQL)
-- **Flyway** (Control de migraciones evolutivas)
-- **Maven** (Gestión de dependencias y construcción)
+- **Flyway** (Control de migraciones evolutivas V1, V2, V3 y V4)
+- **Maven** (Maven Wrapper `./mvnw`)
 
 ---
 
 ## 🗄️ Migraciones de Base de Datos (Flyway)
-1. **`V1__crear_tablas.sql`**: Creación inicial de las tablas `categoria` y `producto` con la llave foránea `fk_producto_categoria`.
-2. **`V2__agregar_descripcion_producto.sql`**: Adición incremental del campo `descripcion VARCHAR(500)` a la tabla `producto`.
-3. **`V3__crear_tabla_proveedor_y_relacion.sql`** *(Reto Final)*: Creación de la tabla `proveedor` y vinculación con `producto` mediante `proveedor_id` y `fk_producto_proveedor`.
+1. **`V1__crear_tablas.sql`**: Creación inicial de las tablas `categoria` y `producto`.
+2. **`V2__agregar_descripcion_producto.sql`**: Adición del campo `descripcion VARCHAR(500)` a la tabla `producto`.
+3. **`V3__crear_tabla_proveedor_y_relacion.sql`**: Creación de la tabla `proveedor` y clave foránea `proveedor_id` en `producto`.
+4. **`V4__crear_etiquetas.sql`**: Creación de la tabla `etiqueta` y tabla intermedia de unión `producto_etiqueta` para la relación N:M.
 
 ---
 
-## 🔗 Endpoints de la API
-
-### Categorías (`/api/categorias`)
-- `GET /api/categorias`: Listar todas las categorías.
-- `POST /api/categorias`: Registrar una nueva categoría.
-
-### Proveedores (`/api/proveedores`) - Reto Final
-- `GET /api/proveedores`: Listar todos los proveedores.
-- `POST /api/proveedores`: Registrar un nuevo proveedor.
+## 🔗 Endpoints Principales de la API
 
 ### Productos (`/api/productos`)
-- `GET /api/productos`: Listar productos con sus entidades `categoria` y `proveedor` anidadas.
-- `POST /api/productos`: Registrar un producto asignando su categoría y proveedor.
+- `GET /api/productos`: Listar todos los productos.
+- `GET /api/productos/{id}`: Obtener producto por ID.
+- `POST /api/productos`: Crear producto utilizando `ProductoRequestDTO` (201 Created).
+- `PUT /api/productos/{id}`: Actualizar producto completo.
+- `DELETE /api/productos/{id}`: Eliminar producto (204 No Content).
+- `GET /api/productos/categoria/{categoriaId}`: Consultar productos por categoría.
+- `POST /api/productos/{productoId}/etiquetas/{etiquetaId}`: Asociar etiqueta a un producto.
+- `DELETE /api/productos/{productoId}/etiquetas/{etiquetaId}`: **(Reto 1)** Eliminar asociación producto-etiqueta.
+- `GET /api/productos/etiqueta/{etiquetaId}`: **(Reto 2)** Consultar productos por etiqueta.
+
+### Etiquetas (`/api/etiquetas`)
+- `GET /api/etiquetas`: Listar todas las etiquetas.
+- `GET /api/etiquetas/{id}`: Obtener etiqueta por ID.
+- `POST /api/etiquetas`: Registrar nueva etiqueta.
+
+### Categorías (`/api/categorias`) y Proveedores (`/api/proveedores`)
+- Endpoints `GET` y `POST` para la administración de categorías y proveedores.
 
 ---
 
 ## 📄 Documentación Completa y Evidencias
 Consulte el archivo [**`DOCUMENTO_ENTREGA.md`**](./DOCUMENTO_ENTREGA.md) para ver:
-- Configuración detallada de conexión y `application.properties`.
-- Estructura completa de paquetes y código fuente de entidades, repositorios y controladores.
+- Matriz de verificación detallada de cumplimiento.
+- Código fuente de Services, DTOs y Controllers.
 - Diagrama Entidad-Relación (Mermaid).
-- Evidencia de migraciones en PostgreSQL (`flyway_schema_history`).
-- Pruebas y capturas JSON de las peticiones tipo Postman.
-- Respuestas a las 10 preguntas de comprobación de aprendizaje.
-- Conclusiones de la práctica.
+- Salidas reales de PostgreSQL (`flyway_schema_history`, `etiqueta`, `producto_etiqueta`).
+- Pruebas y respuestas JSON de Postman.
+- Respuestas exhaustivas a las 12 preguntas de comprobación de aprendizaje.
 
 ---
 
 ## 🛠️ Cómo Ejecutar el Proyecto
-
-1. Clonar el repositorio:
-   ```bash
-   git clone https://github.com/EveresJJ/Pr-ctica-guiada---Persistencia-y-relaciones-con-Spring-Data-JPA-Javier-Espinoza.git
-   ```
-2. Asegurar que PostgreSQL esté corriendo en el puerto 5432 con la base de datos `gestion_productos`.
-3. Iniciar la aplicación con el Maven Wrapper:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-   (En Windows PowerShell: `.\mvnw.cmd spring-boot:run`)
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+El servidor responderá en `http://localhost:8080`.

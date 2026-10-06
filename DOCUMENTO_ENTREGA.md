@@ -1,412 +1,91 @@
-# Práctica Guiada: Persistencia y Relaciones con Spring Data JPA
+# Laboratorio #1: Implementación de Persistencia con Spring Data JPA, Modelos, Migraciones y Relaciones
+## Práctica Guiada # 2 - Evolución de Arquitectura y Relaciones Muchos a Muchos
 
 **Asignatura:** Servicios Web  
-**Unidad:** Unidad II. Desarrollo de Servicios Web con SpringBoot  
+**Unidad:** Unidad II. Desarrollo de Servicios Web con Spring Boot  
 **Carrera:** Ingeniería en Sistemas de Información  
 **Institución:** Universidad Americana (UAM)  
-**Proyecto:** `gestion-productos`  
-**Base de Datos:** PostgreSQL 18  
+**Proyecto Base:** `gestion-productos`  
+**Estudiante:** Javier Espinoza  
 
 ---
 
-## 1. Configuración de la Conexión
+## 1. Verificación del Cumplimiento de Requerimientos
 
-### 1.1 Dependencias del Proyecto (`pom.xml`)
-Se configuró el proyecto Maven con Java 21 y Spring Boot 3.4.4, incluyendo los starters esenciales para desarrollo web, persistencia relacional con JPA, controlador JDBC de PostgreSQL, validación y soporte de migraciones automáticas con Flyway:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.4</version>
-        <relativePath/>
-    </parent>
-    <groupId>ni.edu.uam</groupId>
-    <artifactId>gestion-productos</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>gestion-productos</name>
-    <description>Practica guiada - Persistencia y relaciones con Spring Data JPA</description>
-
-    <properties>
-        <java.version>21</java.version>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-### 1.2 Archivo de Propiedades (`src/main/resources/application.properties`)
-Se configuró la conexión a PostgreSQL con el usuario `postgres`, asignando a Hibernate la directiva `ddl-auto=validate` para garantizar que la creación y modificación estructural sea responsabilidad exclusiva de Flyway, mientras Hibernate únicamente valida la coherencia entre el modelo Java y el esquema físico:
-
-```properties
-spring.application.name=gestion-productos
-
-spring.datasource.url=jdbc:postgresql://localhost:5432/gestion_productos
-spring.datasource.username=postgres
-spring.datasource.password=postgres
-
-spring.jpa.hibernate.ddl-auto=validate
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
-
-spring.flyway.enabled=true
-```
+| Requerimiento de la Guía | Estado | Componente Implementado |
+|---|---|---|
+| **Estructura en capas (controller, service, repository, entity, dto)** | ✅ Cumple | Paquetes modulares y desacoplados |
+| **Paso 2: Crear ProductoService** | ✅ Cumple | `service/ProductoService.java` con `@Transactional` |
+| **Paso 3: Refactorizar ProductoController** | ✅ Cumple | `controller/ProductoController.java` inyecta `ProductoService` |
+| **Paso 4: Crear ProductoRequestDTO** | ✅ Cumple | `dto/ProductoRequestDTO.java` con validaciones Jakarta Bean Validation |
+| **Paso 5: Registrar productos con DTO** | ✅ Cumple | `POST /api/productos` recibe `ProductoRequestDTO` y retorna 201 Created |
+| **Paso 6: Actualización de productos (PUT)** | ✅ Cumple | `PUT /api/productos/{id}` actualiza campos, categoría, proveedor y etiquetas |
+| **Paso 7: Eliminación de productos (DELETE)** | ✅ Cumple | `DELETE /api/productos/{id}` elimina entidad y retorna 204 No Content |
+| **Paso 8: Relación 1:N Bidireccional** | ✅ Cumple | `Categoria` tiene `@OneToMany` hacia `Producto` con `@JsonIgnore` para prevenir recursión |
+| **Paso 9: Consultar productos por categoría** | ✅ Cumple | `GET /api/productos/categoria/{categoriaId}` |
+| **Paso 10: Migración para Etiqueta (V4)** | ✅ Cumple | `V4__crear_etiquetas.sql` creando `etiqueta` y `producto_etiqueta` |
+| **Paso 11: Entidad y repositorio Etiqueta** | ✅ Cumple | `entity/Etiqueta.java` y `repository/EtiquetaRepository.java` |
+| **Paso 12: Relacionar Producto y Etiqueta** | ✅ Cumple | `@ManyToMany` con `@JoinTable(name = "producto_etiqueta")` |
+| **Paso 13: Crear etiquetas** | ✅ Cumple | `controller/EtiquetaController.java` (`POST /api/etiquetas`) |
+| **Paso 14: Asociar etiquetas a un producto** | ✅ Cumple | `POST /api/productos/{productoId}/etiquetas/{etiquetaId}` |
+| **Reto 1: Eliminar asociación Producto-Etiqueta** | ✅ Cumple | `DELETE /api/productos/{productoId}/etiquetas/{etiquetaId}` |
+| **Reto 2: Consultar productos por etiqueta** | ✅ Cumple | `GET /api/productos/etiqueta/{etiquetaId}` |
+| **Comprobación de aprendizaje (12 preguntas)** | ✅ Cumple | Respondidas en la sección 7 |
 
 ---
 
-## 2. Estructura de Paquetes
-
-El proyecto sigue una arquitectura en capas limpia y desacoplada dentro del paquete base `ni.edu.uam.gestion_productos`:
+## 2. Arquitectura del Proyecto y Estructura de Paquetes
 
 ```text
 gestion-productos/
 ├── pom.xml
-├── mvnw
-├── mvnw.cmd
-├── .mvn/
-│   └── wrapper/
-│       ├── maven-wrapper.jar
-│       └── maven-wrapper.properties
-└── src/
-    ├── main/
-    │   ├── java/
-    │   │   └── ni/
-    │   │       └── edu/
-    │   │           └── uam/
-    │   │               └── gestion_productos/
-    │   │                   ├── GestionProductosApplication.java
-    │   │                   ├── controller/
-    │   │                   │   ├── CategoriaController.java
-    │   │                   │   ├── ProductoController.java
-    │   │                   │   └── ProveedorController.java
-    │   │                   ├── entity/
-    │   │                   │   ├── Categoria.java
-    │   │                   │   ├── Producto.java
-    │   │                   │   └── Proveedor.java
-    │   │                   └── repository/
-    │   │                       ├── CategoriaRepository.java
-    │   │                       ├── ProductoRepository.java
-    │   │                       └── ProveedorRepository.java
-    │   └── resources/
-    │       ├── application.properties
-    │       └── db/
-    │           └── migration/
-    │               ├── V1__crear_tablas.sql
-    │               ├── V2__agregar_descripcion_producto.sql
-    │               └── V3__crear_tabla_proveedor_y_relacion.sql
-    └── test/
-        └── java/
-            └── ni/
-                └── edu/
-                    └── uam/
-                        └── gestion_productos/
-                            └── GestionProductosApplicationTests.java
+├── mvnw / mvnw.cmd
+├── src/
+│   ├── main/
+│   │   ├── java/ni/edu/uam/gestion_productos/
+│   │   │   ├── GestionProductosApplication.java
+│   │   │   ├── controller/
+│   │   │   │   ├── CategoriaController.java
+│   │   │   │   ├── ProductoController.java
+│   │   │   │   ├── ProveedorController.java
+│   │   │   │   ├── EtiquetaController.java
+│   │   │   │   └── GlobalExceptionHandler.java
+│   │   │   ├── service/
+│   │   │   │   ├── ProductoService.java
+│   │   │   │   └── EtiquetaService.java
+│   │   │   ├── dto/
+│   │   │   │   └── ProductoRequestDTO.java
+│   │   │   ├── entity/
+│   │   │   │   ├── Categoria.java
+│   │   │   │   ├── Producto.java
+│   │   │   │   ├── Proveedor.java
+│   │   │   │   └── Etiqueta.java
+│   │   │   └── repository/
+│   │   │       ├── CategoriaRepository.java
+│   │   │       ├── ProductoRepository.java
+│   │   │       ├── ProveedorRepository.java
+│   │   │       └── EtiquetaRepository.java
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       └── db/migration/
+│   │           ├── V1__crear_tablas.sql
+│   │           ├── V2__agregar_descripcion_producto.sql
+│   │           ├── V3__crear_tabla_proveedor_y_relacion.sql
+│   │           └── V4__crear_etiquetas.sql
+│   └── test/java/ni/edu/uam/gestion_productos/
+│       └── GestionProductosApplicationTests.java
 ```
 
 ---
 
-## 3. Entidades Desarrolladas
-
-### 3.1 Entidad `Categoria` (`Categoria.java`)
-Representa la clasificación del catálogo comercial:
-```java
-package ni.edu.uam.gestion_productos.entity;
-
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "categoria")
-public class Categoria {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    private String nombre;
-
-    private boolean activa;
-
-    public Categoria() {
-    }
-
-    public Categoria(Integer id, String nombre, boolean activa) {
-        this.id = id;
-        this.nombre = nombre;
-        this.activa = activa;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public boolean isActiva() {
-        return activa;
-    }
-
-    public void setActiva(boolean activa) {
-        this.activa = activa;
-    }
-}
-```
-
-### 3.2 Entidad `Proveedor` (`Proveedor.java`) - Reto Final
-Representa al suministrador de productos:
-```java
-package ni.edu.uam.gestion_productos.entity;
-
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "proveedor")
-public class Proveedor {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    @Column(nullable = false, length = 150)
-    private String nombre;
-
-    @Column(length = 30)
-    private String telefono;
-
-    @Column(length = 100)
-    private String correo;
-
-    private boolean activo = true;
-
-    public Proveedor() {
-    }
-
-    public Proveedor(Integer id, String nombre, String telefono, String correo, boolean activo) {
-        this.id = id;
-        this.nombre = nombre;
-        this.telefono = telefono;
-        this.correo = correo;
-        this.activo = activo;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public String getCorreo() {
-        return correo;
-    }
-
-    public void setCorreo(String correo) {
-        this.correo = correo;
-    }
-
-    public boolean isActivo() {
-        return activo;
-    }
-
-    public void setActivo(boolean activo) {
-        this.activo = activo;
-    }
-}
-```
-
-### 3.3 Entidad `Producto` (`Producto.java`)
-Contiene las relaciones `@ManyToOne` hacia `Categoria` y hacia `Proveedor`:
-```java
-package ni.edu.uam.gestion_productos.entity;
-
-import jakarta.persistence.*;
-import java.math.BigDecimal;
-
-@Entity
-@Table(name = "producto")
-public class Producto {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    private String codigo;
-
-    private String nombre;
-
-    private String descripcion;
-
-    @ManyToOne
-    @JoinColumn(name = "categoria_id")
-    private Categoria categoria;
-
-    @ManyToOne
-    @JoinColumn(name = "proveedor_id")
-    private Proveedor proveedor;
-
-    @Column(name = "precio_venta")
-    private BigDecimal precioVenta;
-
-    private int existencia;
-
-    public Producto() {
-    }
-
-    public Producto(Integer id, String codigo, String nombre, String descripcion, Categoria categoria, Proveedor proveedor, BigDecimal precioVenta, int existencia) {
-        this.id = id;
-        this.codigo = codigo;
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.categoria = categoria;
-        this.proveedor = proveedor;
-        this.precioVenta = precioVenta;
-        this.existencia = existencia;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public Categoria getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(Categoria categoria) {
-        this.categoria = categoria;
-    }
-
-    public Proveedor getProveedor() {
-        return proveedor;
-    }
-
-    public void setProveedor(Proveedor proveedor) {
-        this.proveedor = proveedor;
-    }
-
-    public BigDecimal getPrecioVenta() {
-        return precioVenta;
-    }
-
-    public void setPrecioVenta(BigDecimal precioVenta) {
-        this.precioVenta = precioVenta;
-    }
-
-    public int getExistencia() {
-        return existencia;
-    }
-
-    public void setExistencia(int existencia) {
-        this.existencia = existencia;
-    }
-}
-```
-
----
-
-## 4. Diagrama de Relaciones
+## 3. Diagrama Entidad-Relación
 
 ```mermaid
 erDiagram
     CATEGORIA ||--o{ PRODUCTO : "clasifica (1 a N)"
     PROVEEDOR ||--o{ PRODUCTO : "suministra (1 a N)"
+    PRODUCTO ||--o{ PRODUCTO_ETIQUETA : "posee"
+    ETIQUETA ||--o{ PRODUCTO_ETIQUETA : "se aplica a"
 
     CATEGORIA {
         int id PK "SERIAL"
@@ -426,481 +105,503 @@ erDiagram
         int id PK "SERIAL"
         string codigo UK "VARCHAR(30) UNIQUE NOT NULL"
         string nombre "VARCHAR(150) NOT NULL"
+        string descripcion "VARCHAR(500)"
         numeric precio_venta "NUMERIC(12,2) NOT NULL"
         int existencia "INTEGER DEFAULT 0"
         int categoria_id FK "REFERENCES categoria(id)"
         int proveedor_id FK "REFERENCES proveedor(id)"
-        string descripcion "VARCHAR(500)"
+    }
+
+    ETIQUETA {
+        int id PK "SERIAL"
+        string nombre UK "VARCHAR(50) UNIQUE NOT NULL"
+    }
+
+    PRODUCTO_ETIQUETA {
+        int producto_id PK,FK "REFERENCES producto(id) ON DELETE CASCADE"
+        int etiqueta_id PK,FK "REFERENCES etiqueta(id) ON DELETE CASCADE"
     }
 ```
 
 ---
 
-## 5. Scripts de Migración Flyway
+## 4. Scripts de Migración Flyway (V1, V2, V3 y V4)
 
-### 5.1 Script `V1__crear_tablas.sql`
+### `V4__crear_etiquetas.sql` (Paso 10)
 ```sql
-CREATE TABLE categoria (
+CREATE TABLE etiqueta (
     id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    activa BOOLEAN NOT NULL DEFAULT TRUE
+    nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE producto (
-    id SERIAL PRIMARY KEY,
-    codigo VARCHAR(30) NOT NULL UNIQUE,
-    nombre VARCHAR(150) NOT NULL,
-    precio_venta NUMERIC(12,2) NOT NULL,
-    existencia INTEGER NOT NULL DEFAULT 0,
-    categoria_id INTEGER NOT NULL,
-
-    CONSTRAINT fk_producto_categoria
-        FOREIGN KEY (categoria_id)
-        REFERENCES categoria(id)
+CREATE TABLE producto_etiqueta (
+    producto_id INTEGER NOT NULL,
+    etiqueta_id INTEGER NOT NULL,
+    PRIMARY KEY (producto_id, etiqueta_id),
+    CONSTRAINT fk_pe_producto
+        FOREIGN KEY (producto_id)
+        REFERENCES producto(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_pe_etiqueta
+        FOREIGN KEY (etiqueta_id)
+        REFERENCES etiqueta(id)
+        ON DELETE CASCADE
 );
-```
-
-### 5.2 Script `V2__agregar_descripcion_producto.sql`
-```sql
-ALTER TABLE producto
-ADD COLUMN descripcion VARCHAR(500);
-```
-
-### 5.3 Script `V3__crear_tabla_proveedor_y_relacion.sql` (Reto Final)
-```sql
-CREATE TABLE proveedor (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(150) NOT NULL,
-    telefono VARCHAR(30),
-    correo VARCHAR(100),
-    activo BOOLEAN NOT NULL DEFAULT TRUE
-);
-
-ALTER TABLE producto
-ADD COLUMN proveedor_id INTEGER,
-ADD CONSTRAINT fk_producto_proveedor
-    FOREIGN KEY (proveedor_id)
-    REFERENCES proveedor(id);
 ```
 
 ---
 
-## 6. Evidencia de PostgreSQL
+## 5. Implementación de Código Clave
 
-### 6.1 Historial de Migraciones Flyway (`flyway_schema_history`)
-Consulta ejecutada en PostgreSQL:
-```sql
-SELECT installed_rank, version, description, type, script, success FROM flyway_schema_history ORDER BY installed_rank;
+### 5.1 `ProductoRequestDTO.java`
+```java
+package ni.edu.uam.gestion_productos.dto;
+
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.util.Set;
+
+public class ProductoRequestDTO {
+
+    @NotBlank(message = "El código es obligatorio")
+    private String codigo;
+
+    @NotBlank(message = "El nombre es obligatorio")
+    private String nombre;
+
+    private String descripcion;
+
+    @NotNull(message = "El ID de categoría es obligatorio")
+    private Integer categoriaId;
+
+    private Integer proveedorId;
+
+    @NotNull(message = "El precio de venta es obligatorio")
+    @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor a 0")
+    private BigDecimal precioVenta;
+
+    @Min(value = 0, message = "La existencia no puede ser negativa")
+    private int existencia;
+
+    private Set<Integer> etiquetasIds;
+
+    // Constructores, Getters y Setters
+}
 ```
-Resultado obtenido:
+
+### 5.2 `ProductoService.java`
+```java
+@Service
+public class ProductoService {
+
+    private final ProductoRepository productoRepository;
+    private final CategoriaRepository categoriaRepository;
+    private final ProveedorRepository proveedorRepository;
+    private final EtiquetaRepository etiquetaRepository;
+
+    public ProductoService(ProductoRepository productoRepository,
+                           CategoriaRepository categoriaRepository,
+                           ProveedorRepository proveedorRepository,
+                           EtiquetaRepository etiquetaRepository) {
+        this.productoRepository = productoRepository;
+        this.categoriaRepository = categoriaRepository;
+        this.proveedorRepository = proveedorRepository;
+        this.etiquetaRepository = etiquetaRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> listarTodos() {
+        return productoRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Producto obtenerPorId(Integer id) {
+        return productoRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Producto no encontrado con ID: " + id));
+    }
+
+    @Transactional
+    public Producto crear(ProductoRequestDTO dto) {
+        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new NoSuchElementException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
+
+        Proveedor proveedor = null;
+        if (dto.getProveedorId() != null) {
+            proveedor = proveedorRepository.findById(dto.getProveedorId())
+                    .orElseThrow(() -> new NoSuchElementException("Proveedor no encontrado con ID: " + dto.getProveedorId()));
+        }
+
+        Producto producto = new Producto();
+        producto.setCodigo(dto.getCodigo());
+        producto.setNombre(dto.getNombre());
+        producto.setDescripcion(dto.getDescripcion());
+        producto.setCategoria(categoria);
+        producto.setProveedor(proveedor);
+        producto.setPrecioVenta(dto.getPrecioVenta());
+        producto.setExistencia(dto.getExistencia());
+
+        if (dto.getEtiquetasIds() != null && !dto.getEtiquetasIds().isEmpty()) {
+            Set<Etiqueta> etiquetas = new HashSet<>(etiquetaRepository.findAllById(dto.getEtiquetasIds()));
+            producto.setEtiquetas(etiquetas);
+        }
+
+        return productoRepository.save(producto);
+    }
+
+    @Transactional
+    public Producto actualizar(Integer id, ProductoRequestDTO dto) {
+        Producto producto = obtenerPorId(id);
+
+        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new NoSuchElementException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
+
+        Proveedor proveedor = null;
+        if (dto.getProveedorId() != null) {
+            proveedor = proveedorRepository.findById(dto.getProveedorId())
+                    .orElseThrow(() -> new NoSuchElementException("Proveedor no encontrado con ID: " + dto.getProveedorId()));
+        }
+
+        producto.setCodigo(dto.getCodigo());
+        producto.setNombre(dto.getNombre());
+        producto.setDescripcion(dto.getDescripcion());
+        producto.setCategoria(categoria);
+        producto.setProveedor(proveedor);
+        producto.setPrecioVenta(dto.getPrecioVenta());
+        producto.setExistencia(dto.getExistencia());
+
+        if (dto.getEtiquetasIds() != null) {
+            Set<Etiqueta> etiquetas = new HashSet<>(etiquetaRepository.findAllById(dto.getEtiquetasIds()));
+            producto.setEtiquetas(etiquetas);
+        }
+
+        return productoRepository.save(producto);
+    }
+
+    @Transactional
+    public void eliminar(Integer id) {
+        Producto producto = obtenerPorId(id);
+        productoRepository.delete(producto);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> listarPorCategoria(Integer categoriaId) {
+        if (!categoriaRepository.existsById(categoriaId)) {
+            throw new NoSuchElementException("Categoría no encontrada con ID: " + categoriaId);
+        }
+        return productoRepository.findByCategoriaId(categoriaId);
+    }
+
+    @Transactional
+    public Producto asociarEtiqueta(Integer productoId, Integer etiquetaId) {
+        Producto producto = obtenerPorId(productoId);
+        Etiqueta etiqueta = etiquetaRepository.findById(etiquetaId)
+                .orElseThrow(() -> new NoSuchElementException("Etiqueta no encontrada con ID: " + etiquetaId));
+
+        producto.agregarEtiqueta(etiqueta);
+        return productoRepository.save(producto);
+    }
+
+    @Transactional
+    public Producto desasociarEtiqueta(Integer productoId, Integer etiquetaId) {
+        Producto producto = obtenerPorId(productoId);
+        Etiqueta etiqueta = etiquetaRepository.findById(etiquetaId)
+                .orElseThrow(() -> new NoSuchElementException("Etiqueta no encontrada con ID: " + etiquetaId));
+
+        producto.eliminarEtiqueta(etiqueta);
+        return productoRepository.save(producto);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> listarPorEtiqueta(Integer etiquetaId) {
+        if (!etiquetaRepository.existsById(etiquetaId)) {
+            throw new NoSuchElementException("Etiqueta no encontrada con ID: " + etiquetaId);
+        }
+        return productoRepository.findByEtiquetasId(etiquetaId);
+    }
+}
+```
+
+### 5.3 `ProductoController.java`
+```java
+@RestController
+@RequestMapping("/api/productos")
+public class ProductoController {
+
+    private final ProductoService productoService;
+
+    public ProductoController(ProductoService productoService) {
+        this.productoService = productoService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Producto>> listar() {
+        return ResponseEntity.ok(productoService.listarTodos());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Producto> obtenerPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(productoService.obtenerPorId(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<Producto> crear(@Valid @RequestBody ProductoRequestDTO dto) {
+        Producto creado = productoService.crear(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Producto> actualizar(@PathVariable Integer id, @Valid @RequestBody ProductoRequestDTO dto) {
+        return ResponseEntity.ok(productoService.actualizar(id, dto));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
+        productoService.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/categoria/{categoriaId}")
+    public ResponseEntity<List<Producto>> listarPorCategoria(@PathVariable Integer categoriaId) {
+        return ResponseEntity.ok(productoService.listarPorCategoria(categoriaId));
+    }
+
+    @PostMapping("/{productoId}/etiquetas/{etiquetaId}")
+    public ResponseEntity<Producto> asociarEtiqueta(@PathVariable Integer productoId, @PathVariable Integer etiquetaId) {
+        return ResponseEntity.ok(productoService.asociarEtiqueta(productoId, etiquetaId));
+    }
+
+    @DeleteMapping("/{productoId}/etiquetas/{etiquetaId}")
+    public ResponseEntity<Producto> desasociarEtiqueta(@PathVariable Integer productoId, @PathVariable Integer etiquetaId) {
+        return ResponseEntity.ok(productoService.desasociarEtiqueta(productoId, etiquetaId));
+    }
+
+    @GetMapping("/etiqueta/{etiquetaId}")
+    public ResponseEntity<List<Producto>> listarPorEtiqueta(@PathVariable Integer etiquetaId) {
+        return ResponseEntity.ok(productoService.listarPorEtiqueta(etiquetaId));
+    }
+}
+```
+
+---
+
+## 6. Evidencias de Ejecución y Pruebas (PostgreSQL y Postman)
+
+### 6.1 Historial de Migraciones Flyway
 ```text
  installed_rank | version |           description            | type |                  script                  | success 
 ----------------+---------+----------------------------------+------+------------------------------------------+---------
               1 | 1       | crear tablas                     | SQL  | V1__crear_tablas.sql                     | t
               2 | 2       | agregar descripcion producto     | SQL  | V2__agregar_descripcion_producto.sql     | t
               3 | 3       | crear tabla proveedor y relacion | SQL  | V3__crear_tabla_proveedor_y_relacion.sql | t
-(3 filas)
-```
-
-### 6.2 Tablas Creadas en el Esquema `public`
-```text
-                 Listado de tablas
- Esquema |        Nombre         | Tipo  |   Dueño    
----------+-----------------------+-------+----------
- public  | categoria             | tabla | postgres
- public  | flyway_schema_history | tabla | postgres
- public  | producto              | tabla | postgres
- public  | proveedor             | tabla | postgres
+              4 | 4       | crear etiquetas                  | SQL  | V4__crear_etiquetas.sql                  | t
 (4 filas)
 ```
 
-### 6.3 Datos en Tablas de la Base de Datos
+### 6.2 Evidencia en PostgreSQL de Tablas y Relaciones N:M
 
-#### Tabla `categoria`:
+#### Tabla `etiqueta`:
 ```text
- id |    nombre    | activa 
-----+--------------+--------
-  1 | Computadoras | t
-  2 | Accesorios   | t
-  3 | Monitores    | t
+ id | nombre  
+----+---------
+  1 | Gamer
+  2 | Oferta
+  3 | Premium
 (3 filas)
 ```
 
-#### Tabla `proveedor`:
+#### Tabla `producto_etiqueta`:
 ```text
- id |        nombre        |    telefono    |       correo        | activo 
-----+----------------------+----------------+---------------------+--------
-  1 | Dell Latinoamérica   | +505 2278-9000 | ventas@dell.com     | t
-  2 | Lenovo Centroamérica | +505 2255-4433 | contacto@lenovo.com | t
-(2 filas)
+ producto_id | etiqueta_id 
+-------------+-------------
+           5 |           1
+           5 |           2
+           5 |           3
+(3 filas)
 ```
 
-#### Tabla `producto`:
-```text
- id | codigo  |         nombre         | precio_venta | existencia | categoria_id | proveedor_id |                       descripcion                        
-----+---------+------------------------+--------------+------------+--------------+--------------+----------------------------------------------------------
-  1 | LAP-001 | Laptop Lenovo          |       850.00 |         10 |            1 |              | Laptop Lenovo IdeaPad 15 pulgadas, 16GB RAM, 512GB SSD
-  2 | MON-001 | Monitor Dell 27 4K     |       420.50 |         15 |            3 |            1 | Monitor Dell UltraSharp 27 pulgadas IPS 4K UHD
-  3 | LAP-002 | ThinkPad E14           |       980.00 |          8 |            1 |            2 | Laptop empresarial Lenovo ThinkPad E14 Gen 5 AMD Ryzen 7
-  4 | ACC-001 | Mouse Inalambrico Dell |        35.00 |         50 |            2 |            1 | Mouse optico inalambrico Dell Premier WM527
-(4 filas)
-```
+### 6.3 Pruebas de Endpoints en Postman / REST API
 
----
-
-## 7. Pruebas de Endpoints (Postman / HTTP API)
-
-### 7.1 Categorías
-
-#### [GET] `/api/categorias` (Consulta Inicial - Base vacía)
-- **Status:** `200 OK`
-- **Response:**
+#### [POST] `/api/etiquetas` (Creación de etiquetas - Paso 13)
 ```json
-[]
-```
+// POST http://localhost:8080/api/etiquetas
+// Body:
+{ "nombre": "Gamer" }
 
-#### [POST] `/api/categorias` (Creación de Categorías)
-**Request 1:**
-- **Endpoint:** `http://localhost:8080/api/categorias`
-- **Body:**
-```json
-{
-  "nombre": "Computadoras",
-  "activa": true
-}
-```
-- **Response:** `200 OK`
-```json
+// Response (201 Created):
 {
   "id": 1,
-  "nombre": "Computadoras",
-  "activa": true
+  "nombre": "Gamer"
 }
 ```
 
-**Request 2:**
+#### [POST] `/api/productos` (Creación con DTO - Paso 5)
+- **Endpoint:** `http://localhost:8080/api/productos`
+- **Request Body (ProductoRequestDTO):**
 ```json
 {
-  "nombre": "Accesorios",
-  "activa": true
+  "codigo": "LAP-003",
+  "nombre": "Laptop ASUS ROG Strix",
+  "descripcion": "Laptop gamer ASUS ROG AMD Ryzen 9, RTX 4070, 32GB RAM",
+  "categoriaId": 1,
+  "proveedorId": 1,
+  "precioVenta": 1450.00,
+  "existencia": 5,
+  "etiquetasIds": [1, 3]
 }
 ```
-- **Response:** `200 OK` `{"id": 2, "nombre": "Accesorios", "activa": true}`
-
-**Request 3:**
+- **Response (201 Created):**
 ```json
 {
-  "nombre": "Monitores",
-  "activa": true
-}
-```
-- **Response:** `200 OK` `{"id": 3, "nombre": "Monitores", "activa": true}`
-
-#### [GET] `/api/categorias` (Consulta Posterior)
-- **Response:** `200 OK`
-```json
-[
-  {
+  "id": 5,
+  "codigo": "LAP-003",
+  "nombre": "Laptop ASUS ROG Strix",
+  "descripcion": "Laptop gamer ASUS ROG AMD Ryzen 9, RTX 4070, 32GB RAM",
+  "categoria": {
     "id": 1,
     "nombre": "Computadoras",
     "activa": true
   },
-  {
-    "id": 2,
-    "nombre": "Accesorios",
-    "activa": true
-  },
-  {
-    "id": 3,
-    "nombre": "Monitores",
-    "activa": true
-  }
-]
-```
-
----
-
-### 7.2 Proveedores (Reto Final)
-
-#### [POST] `/api/proveedores` (Proveedor 1)
-- **Endpoint:** `http://localhost:8080/api/proveedores`
-- **Body:**
-```json
-{
-  "nombre": "Dell Latinoamérica",
-  "telefono": "+505 2278-9000",
-  "correo": "ventas@dell.com",
-  "activo": true
-}
-```
-- **Response:** `200 OK`
-```json
-{
-  "id": 1,
-  "nombre": "Dell Latinoamérica",
-  "telefono": "+505 2278-9000",
-  "correo": "ventas@dell.com",
-  "activo": true
-}
-```
-
-#### [POST] `/api/proveedores` (Proveedor 2)
-- **Endpoint:** `http://localhost:8080/api/proveedores`
-- **Body:**
-```json
-{
-  "nombre": "Lenovo Centroamérica",
-  "telefono": "+505 2255-4433",
-  "correo": "contacto@lenovo.com",
-  "activo": true
-}
-```
-- **Response:** `200 OK`
-```json
-{
-  "id": 2,
-  "nombre": "Lenovo Centroamérica",
-  "telefono": "+505 2255-4433",
-  "correo": "contacto@lenovo.com",
-  "activo": true
-}
-```
-
-#### [GET] `/api/proveedores`
-- **Response:** `200 OK`
-```json
-[
-  {
+  "proveedor": {
     "id": 1,
     "nombre": "Dell Latinoamérica",
     "telefono": "+505 2278-9000",
     "correo": "ventas@dell.com",
     "activo": true
   },
-  {
-    "id": 2,
-    "nombre": "Lenovo Centroamérica",
-    "telefono": "+505 2255-4433",
-    "correo": "contacto@lenovo.com",
-    "activo": true
-  }
-]
-```
-
----
-
-### 7.3 Productos con Relaciones (`@ManyToOne`)
-
-#### [POST] `/api/productos` (Creación con Llaves Foráneas Asociadas)
-**Producto 1 (Laptop Lenovo relacionada a Categoría 1):**
-```json
-{
-  "codigo": "LAP-001",
-  "nombre": "Laptop Lenovo",
-  "descripcion": "Laptop Lenovo IdeaPad 15 pulgadas, 16GB RAM, 512GB SSD",
-  "categoria": {
-    "id": 1
-  },
-  "precioVenta": 850.00,
-  "existencia": 10
+  "precioVenta": 1450.00,
+  "existencia": 5,
+  "etiquetas": [
+    { "id": 1, "nombre": "Gamer" },
+    { "id": 3, "nombre": "Premium" }
+  ]
 }
 ```
 
-**Producto 2 (Monitor Dell relacionado a Categoría 3 y Proveedor 1):**
+#### [PUT] `/api/productos/5` (Actualización - Paso 6)
+- **Request Body:**
 ```json
 {
-  "codigo": "MON-001",
-  "nombre": "Monitor Dell 27 4K",
-  "descripcion": "Monitor Dell UltraSharp 27 pulgadas IPS 4K UHD",
-  "categoria": {
-    "id": 3
-  },
-  "proveedor": {
-    "id": 1
-  },
-  "precioVenta": 420.50,
-  "existencia": 15
+  "codigo": "LAP-003",
+  "nombre": "Laptop ASUS ROG Strix (Actualizada)",
+  "descripcion": "Laptop gamer ASUS ROG AMD Ryzen 9, RTX 4070, 32GB RAM - En Oferta",
+  "categoriaId": 1,
+  "proveedorId": 1,
+  "precioVenta": 1399.99,
+  "existencia": 4,
+  "etiquetasIds": [1, 2, 3]
 }
 ```
+- **Response (200 OK):** Actualización reflejada en la BD.
 
-**Producto 3 (ThinkPad E14 relacionado a Categoría 1 y Proveedor 2):**
-```json
-{
-  "codigo": "LAP-002",
-  "nombre": "ThinkPad E14",
-  "descripcion": "Laptop empresarial Lenovo ThinkPad E14 Gen 5 AMD Ryzen 7",
-  "categoria": {
-    "id": 1
-  },
-  "proveedor": {
-    "id": 2
-  },
-  "precioVenta": 980.00,
-  "existencia": 8
-}
-```
+#### [GET] `/api/productos/categoria/1` (Productos por Categoría - Paso 9)
+- **Response (200 OK):** Lista de todos los productos pertenecientes a la categoría 1 ("Computadoras").
 
-**Producto 4 (Mouse Dell relacionado a Categoría 2 y Proveedor 1):**
-```json
-{
-  "codigo": "ACC-001",
-  "nombre": "Mouse Inalámbrico Dell",
-  "descripcion": "Mouse óptico inalámbrico Dell Premier WM527",
-  "categoria": {
-    "id": 2
-  },
-  "proveedor": {
-    "id": 1
-  },
-  "precioVenta": 35.00,
-  "existencia": 50
-}
-```
+#### [POST] `/api/productos/2/etiquetas/1` (Asociar etiqueta - Paso 14)
+- Asocia la etiqueta 1 (`Gamer`) al producto 2 (`Monitor Dell 27 4K`).
+- **Response (200 OK):** Producto 2 con su set de etiquetas actualizado.
 
-#### [GET] `/api/productos` (Respuesta con Objetos Anidados)
-- **Status:** `200 OK`
-- **Response:**
+#### [DELETE] `/api/productos/2/etiquetas/1` (Reto 1: Eliminar asociación)
+- **Resultado:** Elimina la tupla `(2, 1)` de `producto_etiqueta` sin borrar el Producto 2 ni la Etiqueta 1.
+- **Verificación posterior:** `GET /api/etiquetas/1` responde `200 OK` demostrando que la entidad `Etiqueta` permanece intacta.
+
+#### [GET] `/api/productos/etiqueta/1` (Reto 2: Consultar productos por etiqueta)
+- **Endpoint:** `http://localhost:8080/api/productos/etiqueta/1`
+- **Response (200 OK):**
 ```json
 [
   {
-    "id": 1,
-    "codigo": "LAP-001",
-    "nombre": "Laptop Lenovo",
-    "descripcion": "Laptop Lenovo IdeaPad 15 pulgadas, 16GB RAM, 512GB SSD",
-    "categoria": {
-      "id": 1,
-      "nombre": "Computadoras",
-      "activa": true
-    },
-    "proveedor": null,
-    "precioVenta": 850.00,
-    "existencia": 10
-  },
-  {
-    "id": 2,
-    "codigo": "MON-001",
-    "nombre": "Monitor Dell 27 4K",
-    "descripcion": "Monitor Dell UltraSharp 27 pulgadas IPS 4K UHD",
-    "categoria": {
-      "id": 3,
-      "nombre": "Monitores",
-      "activa": true
-    },
-    "proveedor": {
-      "id": 1,
-      "nombre": "Dell Latinoamérica",
-      "telefono": "+505 2278-9000",
-      "correo": "ventas@dell.com",
-      "activo": true
-    },
-    "precioVenta": 420.50,
-    "existencia": 15
-  },
-  {
-    "id": 3,
-    "codigo": "LAP-002",
-    "nombre": "ThinkPad E14",
-    "descripcion": "Laptop empresarial Lenovo ThinkPad E14 Gen 5 AMD Ryzen 7",
-    "categoria": {
-      "id": 1,
-      "nombre": "Computadoras",
-      "activa": true
-    },
-    "proveedor": {
-      "id": 2,
-      "nombre": "Lenovo Centroamérica",
-      "telefono": "+505 2255-4433",
-      "correo": "contacto@lenovo.com",
-      "activo": true
-    },
-    "precioVenta": 980.00,
-    "existencia": 8
-  },
-  {
-    "id": 4,
-    "codigo": "ACC-001",
-    "nombre": "Mouse Inalámbrico Dell",
-    "descripcion": "Mouse óptico inalámbrico Dell Premier WM527",
-    "categoria": {
-      "id": 2,
-      "nombre": "Accesorios",
-      "activa": true
-    },
-    "proveedor": {
-      "id": 1,
-      "nombre": "Dell Latinoamérica",
-      "telefono": "+505 2278-9000",
-      "correo": "ventas@dell.com",
-      "activo": true
-    },
-    "precioVenta": 35.00,
-    "existencia": 50
+    "id": 5,
+    "codigo": "LAP-003",
+    "nombre": "Laptop ASUS ROG Strix (Actualizada)",
+    "categoria": { "id": 1, "nombre": "Computadoras" },
+    "etiquetas": [
+      { "id": 1, "nombre": "Gamer" },
+      { "id": 2, "nombre": "Oferta" },
+      { "id": 3, "nombre": "Premium" }
+    ]
   }
 ]
 ```
 
----
-
-## 8. Comprobación de Aprendizaje (Preguntas y Respuestas)
-
-### 1. ¿Cuál es la función de Spring Data JPA?
-**Respuesta:**  
-La función principal de Spring Data JPA es simplificar drásticamente la capa de acceso a datos en aplicaciones Spring. Actúa como una capa de abstracción sobre los proveedores JPA (como Hibernate), eliminando el código repetitivo (*boilerplate*) necesario para implementar operaciones CRUD, paginación, ordenamiento y consultas derivadas por convención de nombres de métodos (`findBy...`), sin necesidad de implementar manualmente clases DAO ni manejar transacciones a bajo nivel.
-
-### 2. ¿Qué función cumple Hibernate?
-**Respuesta:**  
-Hibernate es el motor ORM (*Object-Relational Mapping*) y la implementación concreta de la especificación JPA utilizada por defecto en Spring Boot. Su función es traducir las clases y objetos Java en tablas y registros de base de datos relacional y viceversa. Hibernate se encarga de generar el código SQL nativo para el motor configurado (PostgreSQL), gestionar la sesión de persistencia, administrar el ciclo de vida de las entidades, gestionar la caché de primer nivel y validar la correspondencia del esquema.
-
-### 3. ¿Qué diferencia existe entre JPA e Hibernate?
-**Respuesta:**  
-- **JPA (Jakarta Persistence API):** Es una **especificación estándar** de Java (un conjunto de interfaces, anotaciones y reglas) que define cómo debe operar el mapeo objeto-relacional. No contiene código ejecutable por sí sola.
-- **Hibernate:** Es una **implementación concreta** (el *framework* real que contiene el código ejecutable) que implementa la especificación JPA y añade funciones adicionales propietarias (como filtros avanzados, caché distribuida de segundo nivel y generadores de ID especializados).
-
-### 4. ¿Qué función cumple `@Entity`?
-**Respuesta:**  
-La anotación `@Entity` le indica a JPA e Hibernate que la clase Java representa una tabla en la base de datos relacional y que sus instancias serán gestionadas por el contexto de persistencia (*EntityManager*). Permite que el ORM mapee los atributos de la clase con las columnas de la tabla correspondiente.
-
-### 5. ¿Qué función cumple `@ManyToOne`?
-**Respuesta:**  
-Define una relación de multiplicidad de "muchos a uno" entre dos entidades. En este caso de estudio, indica que múltiples registros de `Producto` pertenecen a una única `Categoria` (y a un único `Proveedor`). Establece la clave foránea en la tabla propietaria de la relación (`producto`).
-
-### 6. ¿Qué función cumple `@JoinColumn`?
-**Respuesta:**  
-Especifica el nombre físico y las características de la columna que actúa como clave foránea (*foreign key*) en la tabla de la base de datos relacional. En `@JoinColumn(name = "categoria_id")`, le indica a Hibernate que la columna en la tabla `producto` que almacena la referencia hacia la clave primaria de `categoria` se llama exactamente `categoria_id`.
-
-### 7. ¿Qué función cumple `JpaRepository`?
-**Respuesta:**  
-`JpaRepository<T, ID>` es una interfaz provista por Spring Data JPA que proporciona métodos prefabricados para interactuar con la base de datos:
-- `findAll()`: Recupera todos los registros de la entidad.
-- `findById(ID id)`: Busca un registro por su clave primaria.
-- `save(T entity)`: Inserta un nuevo registro o actualiza uno existente.
-- `deleteById(ID id)`: Elimina un registro por clave primaria.
-- `existsById(ID id)`: Comprueba la existencia de un registro.
-- `count()`: Cuenta la cantidad total de registros.  
-Además incorpora soporte para paginación (`PagingAndSortingRepository`) y operaciones por lotes (`batch flush`).
-
-### 8. ¿Por qué se utilizan migraciones?
-**Respuesta:**  
-Las herramientas de migración como **Flyway** proporcionan control de versiones evolutivo y determinista para la estructura de la base de datos relacional. Evitan la discrepancia entre ambientes (desarrollo, pruebas, producción), garantizan que los cambios en las tablas se ejecuten de manera secuencial y automatizada, previenen la pérdida accidental de datos producida por modos destructivos como `ddl-auto=create-drop`, y mantienen una bitácora inmutable en la tabla `flyway_schema_history`.
-
-### 9. ¿Qué diferencia existe entre V1, V2 y V3?
-**Respuesta:**  
-- **`V1__crear_tablas.sql`:** Establece el esquema base inicial, creando la tabla `categoria` y la tabla `producto` con su restricción de clave foránea `fk_producto_categoria`.
-- **`V2__agregar_descripcion_producto.sql`:** Aplica una modificación incremental al producto existente, añadiendo la columna `descripcion VARCHAR(500)`.
-- **`V3__crear_tabla_proveedor_y_relacion.sql`:** Desarrolla el reto final de la práctica al incorporar la nueva entidad `proveedor` y alterar la tabla `producto` para añadir la columna `proveedor_id` con su clave foránea `fk_producto_proveedor`.
-
-### 10. ¿Qué problema puede producir una relación bidireccional al generar JSON?
-**Respuesta:**  
-Una relación bidireccional no controlada provoca un error de **recursión infinita (`StackOverflowError`)** durante la serialización con Jackson (el motor JSON de Spring Boot). Esto ocurre cuando `Categoria` tiene una lista de `Producto` y cada `Producto` referencia a su `Categoria`, provocando un ciclo sin fin (`Categoria -> Producto -> Categoria -> Producto ...`). Para solucionarlo, se diseñan las relaciones de manera unidireccional (como se implementó en esta práctica), o se emplean anotaciones como `@JsonManagedReference` / `@JsonBackReference`, `@JsonIgnore`, o el uso de DTOs (*Data Transfer Objects*).
+#### [DELETE] `/api/productos/{id}` (Eliminación de producto - Paso 7)
+- **Response:** `204 No Content`.
+- Si se vuelve a consultar el ID eliminado: `404 Not Found`.
 
 ---
 
-## 9. Análisis de la Configuración `spring.jpa.hibernate.ddl-auto=validate`
+## 7. Comprobación de Aprendizaje (Cuestionario de 12 Preguntas)
 
-La propiedad `spring.jpa.hibernate.ddl-auto=validate` cumple la función crítica de verificar en el arranque de la aplicación que las entidades Java coincidan con el esquema existente en PostgreSQL, **sin intentar crear, alterar o borrar tablas**. Si existe alguna discrepancia (por ejemplo, falta una columna o el tipo de dato es incompatible), Spring Boot aborta el inicio con una excepción. Esto asegura que el esquema esté estrictamente gobernado por los scripts de migración de Flyway, aplicando las mejores prácticas de la industria para entornos corporativos y de producción.
+### 1. ¿Cuál es la función de una clase Service?
+**Respuesta:**  
+La clase `Service` encapsula la **lógica de negocio**, la orquestación de operaciones y la gestión de transacciones (`@Transactional`). Actúa como puente intermedio entre la capa web (`Controller`) y la capa de acceso a datos (`Repository`), garantizando que las reglas de negocio, validaciones complejas y la coordinación de múltiples repositorios no se mezclen con el protocolo HTTP ni con la persistencia directa.
+
+### 2. ¿Por qué un controlador no debería contener toda la lógica de negocio?
+**Respuesta:**  
+Por el principio de **Responsabilidad Única (SRP)** y separación de intereses (*Separation of Concerns*). Si un controlador maneja la lógica de negocio:
+- Se acopla la lógica al protocolo HTTP (dificultando reutilizarla en tareas en segundo plano, colas de mensajería o CLI).
+- Se complica el mantenimiento y las pruebas unitarias (requerirían simular el entorno web completo).
+- Genera clases "Dios" difíciles de leer y propensas a errores.  
+El controlador únicamente debe recibir la petición, validar el formato de entrada, delegar al servicio y formular la respuesta HTTP.
+
+### 3. ¿Qué es un DTO?
+**Respuesta:**  
+Un **DTO (Data Transfer Object)** es un objeto plano (POJO) diseñado específicamente para transportar datos entre procesos o capas de una aplicación (por ejemplo, entre el cliente HTTP y el servidor) sin transportar lógica de negocio.
+
+### 4. ¿Qué diferencia existe entre un DTO y una entidad JPA?
+**Respuesta:**  
+- **Entidad JPA:** Representa el modelo relacional de la base de datos, está anotada con `@Entity`, tiene ciclo de vida gestionado por el `EntityManager`, y cualquier cambio en sus propiedades dentro de una transacción puede sincronizarse automáticamente en la base de datos (*dirty checking*).
+- **DTO:** Es un contenedor simple de datos desacoplado de la persistencia. Permite filtrar campos sensibles (como contraseñas o datos internos), optimizar el payload de la red y aplicar validaciones específicas a la petición del usuario.
+
+### 5. ¿Qué ventaja tiene recibir `categoriaId` en lugar de una entidad `Categoria` completa?
+**Respuesta:**  
+- **Seguridad e Integridad:** Evita ataques de asignación masiva (*Mass Assignment*), impidiendo que un cliente malicioso modifique inadvertidamente propiedades de la categoría al enviar un producto.
+- **Simplicidad para el Cliente:** El cliente HTTP solo necesita enviar un número entero (`"categoriaId": 1`) en lugar de construir un objeto JSON complejo anidado.
+- **Control en el Servidor:** Permite al `ProductoService` validar si la categoría realmente existe en la base de datos mediante `findById(categoriaId)` antes de intentar asociarla.
+
+### 6. ¿Qué relación representan `@OneToMany` y `@ManyToOne`?
+**Respuesta:**  
+Representan una relación de multiplicidad de uno a muchos vista desde lados opuestos:
+- `@OneToMany`: Vista desde el lado "Uno" (ej. una `Categoria` posee muchos `Producto`).
+- `@ManyToOne`: Vista desde el lado "Muchos" (ej. muchos `Producto` pertenecen a una sola `Categoria`).  
+Es la relación bidireccional clásica donde `@ManyToOne` es el lado propietario que contiene la clave foránea.
+
+### 7. ¿Dónde se almacena la clave foránea en la relación Categoria-Producto?
+**Respuesta:**  
+Se almacena físicamente en la tabla del lado "Muchos", es decir, en la tabla **`producto`**, en la columna definida por `@JoinColumn(name = "categoria_id")`.
+
+### 8. ¿Qué representa `@ManyToMany`?
+**Respuesta:**  
+Representa una relación de multiplicidad de "Muchos a Muchos", donde un registro de una entidad puede estar asociado con múltiples registros de otra entidad y viceversa. En este proyecto: un `Producto` puede tener múltiples `Etiqueta`s (ej. "Gamer", "Oferta"), y una `Etiqueta` puede aplicarse a múltiples `Producto`s.
+
+### 9. ¿Cuál es la función de `@JoinTable`?
+**Respuesta:**  
+Especifica la configuración de la **tabla intermedia (o tabla de unión)** que materializa físicamente la relación `@ManyToMany` en un motor relacional. Define:
+- `name`: Nombre de la tabla intermedia (`producto_etiqueta`).
+- `joinColumns`: Clave foránea que referencia a la entidad propietaria (`producto_id`).
+- `inverseJoinColumns`: Clave foránea que referencia a la entidad inversa (`etiqueta_id`).
+
+### 10. ¿Por qué se necesita la tabla `producto_etiqueta`?
+**Respuesta:**  
+Porque las bases de datos relacionales no admiten de forma normalizada almacenar colecciones o listas dentro de una sola celda. Para representar una relación de muchos a muchos sin violar la Primera Forma Normal (1FN), es obligatorio utilizar una tabla puente intermedia compuesta por las claves primarias de ambas tablas (`producto_id` y `etiqueta_id`), convirtiendo la relación N:M en dos relaciones 1:N.
+
+### 11. ¿Qué responsabilidad corresponde al Repository?
+**Respuesta:**  
+El `Repository` es responsable exclusivo del **acceso a datos y persistencia**. Encapsula las operaciones de consulta, inserción, actualización y eliminación contra el motor relacional mediante interfaces como `JpaRepository`, traduciendo las peticiones del servicio en comandos SQL ejecutados por Hibernate.
+
+### 12. Explique el flujo: Cliente → Controller → Service → Repository → PostgreSQL.
+**Respuesta:**  
+1. **Cliente:** Envía una solicitud HTTP (ej. `POST /api/productos` con un JSON en el cuerpo).
+2. **Controller:** Recibe la petición, deserializa y valida el `ProductoRequestDTO` mediante Bean Validation (`@Valid`). Si es válido, invoca el método correspondiente del `ProductoService`.
+3. **Service:** Ejecuta las reglas de negocio (verifica que la categoría y el proveedor existan, aplica la lógica de etiquetas) e interactúa con el `ProductoRepository`.
+4. **Repository:** Spring Data JPA e Hibernate traducen la entidad Java y sus relaciones en sentencias SQL nativas (`INSERT INTO producto...`).
+5. **PostgreSQL:** El motor de base de datos ejecuta el SQL, verifica restricciones de integridad y foreign keys, y persiste el registro en el almacenamiento.
+6. **Retorno:** El flujo regresa en sentido inverso, transformando la entidad guardada en una respuesta HTTP (`201 Created`) con el JSON resultante hacia el cliente.
 
 ---
 
-## 10. Conclusión
+## 8. Conclusión
 
-El desarrollo de esta práctica permitió comprender de manera integral la persistencia relacional empresarial mediante Spring Boot, Spring Data JPA y PostgreSQL. Se evidenció cómo Flyway garantiza un control de versiones robusto sobre la base de datos relacional al ejecutar migraciones estructuradas (V1, V2 y V3), mientras que Hibernate con `ddl-auto=validate` asegura la integridad del modelo sin alterar manualmente el esquema físico. Asimismo, la implementación de relaciones `@ManyToOne` entre Producto, Categoría y Proveedor demostró la facilidad con la que Spring Data JPA y REST Controllers gestionan y serializan estructuras de datos relacionadas hacia los clientes HTTP.
+La realización de esta práctica consolidó la arquitectura en capas estándar de la industria (Controller, Service, Repository, DTO y Entity), garantizando una estricta separación de responsabilidades y facilitando el mantenimiento y escalabilidad del software. Asimismo, el uso de DTOs permitió blindar la API frente a entradas no controladas, mientras que Flyway administró de forma limpia la evolución del esquema hacia relaciones Muchos a Muchos mediante tablas intermedias. Finalmente, la resolución de los retos finales comprobó la capacidad de manipular asociaciones relacionales complejas sin afectar la integridad del catálogo de productos y etiquetas.

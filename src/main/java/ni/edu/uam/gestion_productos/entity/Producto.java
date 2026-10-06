@@ -2,6 +2,9 @@ package ni.edu.uam.gestion_productos.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "producto")
@@ -11,24 +14,36 @@ public class Producto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false, unique = true, length = 30)
     private String codigo;
 
+    @Column(nullable = false, length = 150)
     private String nombre;
 
+    @Column(length = 500)
     private String descripcion;
 
     @ManyToOne
-    @JoinColumn(name = "categoria_id")
+    @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
 
     @ManyToOne
     @JoinColumn(name = "proveedor_id")
     private Proveedor proveedor;
 
-    @Column(name = "precio_venta")
+    @Column(name = "precio_venta", nullable = false)
     private BigDecimal precioVenta;
 
+    @Column(nullable = false)
     private int existencia;
+
+    @ManyToMany
+    @JoinTable(
+        name = "producto_etiqueta",
+        joinColumns = @JoinColumn(name = "producto_id"),
+        inverseJoinColumns = @JoinColumn(name = "etiqueta_id")
+    )
+    private Set<Etiqueta> etiquetas = new HashSet<>();
 
     public Producto() {
     }
@@ -106,5 +121,34 @@ public class Producto {
 
     public void setExistencia(int existencia) {
         this.existencia = existencia;
+    }
+
+    public Set<Etiqueta> getEtiquetas() {
+        return etiquetas;
+    }
+
+    public void setEtiquetas(Set<Etiqueta> etiquetas) {
+        this.etiquetas = etiquetas;
+    }
+
+    public void agregarEtiqueta(Etiqueta etiqueta) {
+        this.etiquetas.add(etiqueta);
+    }
+
+    public void eliminarEtiqueta(Etiqueta etiqueta) {
+        this.etiquetas.remove(etiqueta);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Producto producto = (Producto) o;
+        return Objects.equals(id, producto.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }
